@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DreamLog AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#060610;--surface:#0d0d1e;--surface2:#141428;--border:#1e1e3a;
+  --accent:#a78bfa;--accent2:#c4b5fd;--text:#f0eeff;--muted:#4a4a70;
+  --green:#4ade80;--red:#f87171;--yellow:#fbbf24;--pink:#f472b6;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100%;overflow:hidden;}
+body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;}
+
+.topbar{padding:11px 16px 9px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.logo{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;}
+.logo-icon{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.tag{background:rgba(167,139,250,.13);color:var(--accent2);padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.4px;}
+.dot-wrap{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--red);}
+.dot.on{background:var(--green);}
+.conn-row{display:flex;gap:6px;}
+.url-in,.model-sel{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:10px;outline:none;flex:1;min-width:0;}
+.url-in:focus,.model-sel:focus{border-color:var(--accent);}
+.btn-xs{background:var(--accent);color:#05040f;border:none;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;flex-shrink:0;}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.view{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.view.active{display:flex;}
+.scroll-area{flex:1;overflow-y:auto;padding:14px 16px 100px;-webkit-overflow-scrolling:touch;}
+.scroll-area::-webkit-scrollbar{display:none;}
+
+/* LOG TAB */
+.mood-row{display:flex;gap:6px;margin-bottom:10px;}
+.mood-btn{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);font-size:18px;cursor:pointer;text-align:center;transition:all .15s;}
+.mood-btn.sel{border-color:var(--accent);background:rgba(167,139,250,.15);}
+
+.clarity-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.clarity-lbl{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
+.clarity-slider{flex:1;accent-color:var(--accent);}
+
+.dream-ta{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:13px;font-family:'Georgia',serif;line-height:1.7;resize:none;outline:none;height:160px;}
+.dream-ta:focus{border-color:var(--accent);}
+.dream-ta::placeholder{color:var(--muted);font-style:italic;}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag-chip{padding:4px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);font-size:11px;color:var(--muted);cursor:pointer;}
+.tag-chip.sel{border-color:var(--accent);background:rgba(167,139,250,.12);color:var(--accent2);}
+
+.save-btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#05040f;padding:13px;border-radius:12px;font-size:14px;font-weight:700;margin-top:12px;}
+
+/* DREAM CARDS */
+.dream-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.dream-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.dream-date{font-size:11px;color:var(--muted);}
+.dream-mood{font-size:20px;}
+.dream-title{font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.4;}
+.dream-excerpt{font-size:12px;color:var(--muted);line-height:1.6;font-family:'Georgia',serif;margin-bottom:8px;}
+.dream-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.dtag{padding:2px 8px;border-radius:8px;font-size:10px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);color:var(--accent2);}
+.clarity-badge{font-size:10px;color:var(--muted);}
+
+.interp-section{background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.15);border-radius:10px;padding:12px;margin-top:8px;}
+.interp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent2);margin-bottom:6px;}
+.interp-text{font-size:12px;line-height:1.7;white-space:pre-wrap;}
+
+.interp-btn{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:8px;font-size:12px;font-weight:600;margin-top:8px;}
+.del-btn{background:none;border:none;color:var(--muted);font-size:13px;padding:2px;}
+
+.empty-state{text-align:center;color:var(--muted);padding:50px 20px;font-size:12px;line-height:1.8;}
+.empty-state .big{font-size:36px;margin-bottom:12px;}
+
+/* PATTERNS TAB */
+.pattern-stat-row{display:flex;gap:8px;margin-bottom:12px;}
+.pstat{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;}
+.pstat-num{font-size:20px;font-weight:800;color:var(--accent2);}
+.pstat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+
+.symbol-cloud{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.symbol-tag{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(167,139,250,.3);background:rgba(167,139,250,.08);color:var(--accent2);}
+.symbol-tag.lg{font-size:14px;padding:6px 14px;}
+.symbol-tag.sm{font-size:10px;padding:3px 9px;opacity:.7;}
+
+.pattern-report-btn{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:10px;}
+.pattern-box{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:14px;font-size:12px;line-height:1.7;white-space:pre-wrap;margin-bottom:12px;}
+
+.section-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:14px 0 8px;}
+
+.mood-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.mood-bar-bg{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.mood-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.mood-bar-lbl{font-size:20px;width:24px;}
+.mood-bar-count{font-size:10px;color:var(--muted);width:20px;text-align:right;}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:20px;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="r1">
+    <div class="logo"><div class="logo-icon">&#127769;</div>DreamLog AI<span class="tag">OFFLINE AI</span></div>
+    <div class="dot-wrap"><div class="dot" id="dot"></div><span id="stxt">Offline</span></div>
+  </div>
+  <div class="conn-row">
+    <input class="url-in" id="ollamaUrl" value="http://localhost:11434">
+    <select class="model-sel" id="modelSel">
+      <option value="llama3.2">llama3.2</option>
+      <option value="mistral">mistral</option>
+      <option value="gemma2">gemma2</option>
+      <option value="qwen2.5">qwen2.5</option>
+    </select>
+    <button class="btn-xs" onclick="checkOllama()">Connect</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('log')">&#127769; Log</div>
+  <div class="tab" onclick="switchTab('dreams')">&#128218; Dreams</div>
+  <div class="tab" onclick="switchTab('patterns')">&#10024; Patterns</div>
+</div>
+
+<!-- LOG TAB -->
+<div class="view active" id="view-log">
+  <div class="scroll-area">
+    <div class="section-hd">How did you feel?</div>
+    <div class="mood-row">
+      <div class="mood-btn" onclick="selMood(this,'😊')">😊</div>
+      <div class="mood-btn" onclick="selMood(this,'😨')">😨</div>
+      <div class="mood-btn" onclick="selMood(this,'😕')">😕</div>
+      <div class="mood-btn" onclick="selMood(this,'😲')">😲</div>
+      <div class="mood-btn" onclick="selMood(this,'😌')">😌</div>
+      <div class="mood-btn sel" onclick="selMood(this,'🌙')">🌙</div>
+    </div>
+
+    <div class="clarity-row">
+      <span class="clarity-lbl">Clarity:</span>
+      <input type="range" class="clarity-slider" id="claritySlider" min="1" max="5" value="3">
+      <span id="clarityVal" style="font-size:11px;color:var(--accent2);font-weight:700;width:20px;">3</span>
+    </div>
+
+    <div class="section-hd">Dream description</div>
+    <textarea class="dream-ta" id="dreamText" placeholder="I was in a strange house that kept changing rooms… there was a door that led to the ocean… someone was chasing me but I couldn't see their face…"></textarea>
+
+    <div class="section-hd">Themes (tap to add)</div>
+    <div class="tag-row" id="themeRow">
+      <div class="tag-chip" onclick="toggleTag(this,'Flying')">Flying</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Falling')">Falling</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Chase')">Chase</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Water')">Water</div>
+      <div class="tag-chip" onclick="toggleTag(this,'House')">House</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Animals')">Animals</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Death')">Death</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Love')">Love</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Lost')">Lost</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Teeth')">Teeth</div>
+      <div class="tag-chip" onclick="toggleTag(this,'Exam')">Exam</div>
+      <div class="tag-chip" onclick="toggleTag(this,'People')">People</div>
+    </div>
+    <button class="save-btn" onclick="saveDream()">&#127769; Save Dream</button>
+  </div>
+</div>
+
+<!-- DREAMS TAB -->
+<div class="view" id="view-dreams">
+  <div class="scroll-area" id="dreamsList">
+    <div class="empty-state"><div class="big">&#127769;</div>No dreams logged yet.<br>Tap Log to record your first dream.</div>
+  </div>
+</div>
+
+<!-- PATTERNS TAB -->
+<div class="view" id="view-patterns">
+  <div class="scroll-area" id="patternsArea">
+    <div class="empty-state"><div class="big">&#10024;</div>Log at least 3 dreams<br>to see pattern analysis.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var dreams = JSON.parse(localStorage.getItem('dl_dreams')||'[]');
+var ollamaConnected = false;
+var selectedMood = '🌙';
+var selectedTags = [];
+
+window.onload = function(){
+  document.getElementById('claritySlider').oninput=function(){document.getElementById('clarityVal').textContent=this.value;};
+  renderDreams(); renderPatterns(); checkOllama();
+};
+
+async function checkOllama(){
+  try{
+    var r=await fetch(document.getElementById('ollamaUrl').value+'/api/tags');
+    if(r.ok){
+      var d=await r.json(); ollamaConnected=true;
+      document.getElementById('dot').className='dot on';
+      document.getElementById('stxt').textContent='Connected';
+      if(d.models&&d.models.length){var s=document.getElementById('modelSel');s.innerHTML='';d.models.forEach(function(m){var o=document.createElement('option');o.value=m.name;o.textContent=m.name;s.appendChild(o);});}
+      showToast('Ollama connected');
+    }
+  }catch(e){ollamaConnected=false;document.getElementById('dot').className='dot';document.getElementById('stxt').textContent='Offline';}
+}
+
+async function callOllama(prompt){
+  var url=document.getElementById('ollamaUrl').value;
+  var model=document.getElementById('modelSel').value;
+  var r=await fetch(url+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model,prompt:prompt,stream:false})});
+  if(!r.ok) throw new Error('Ollama error');
+  return (await r.json()).response;
+}
+
+function esc(s){return(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function selMood(btn,mood){
+  selectedMood=mood;
+  document.querySelectorAll('.mood-btn').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+}
+
+function toggleTag(el,tag){
+  var idx=selectedTags.indexOf(tag);
+  if(idx>=0){selectedTags.splice(idx,1);el.classList.remove('sel');}
+  else{selectedTags.push(tag);el.classList.add('sel');}
+}
+
+function saveDream(){
+  var text=document.getElementById('dreamText').value.trim();
+  if(!text){showToast('Write your dream first');return;}
+  var clarity=parseInt(document.getElementById('claritySlider').value);
+  var dream={
+    id:Date.now().toString(),
+    text:text,
+    mood:selectedMood,
+    clarity:clarity,
+    tags:selectedTags.slice(),
+    date:new Date().toISOString(),
+    interpretation:null
+  };
+  dreams.unshift(dream);
+  localStorage.setItem('dl_dreams',JSON.stringify(dreams));
+  // reset form
+  document.getElementById('dreamText').value='';
+  document.getElementById('claritySlider').value=3;
+  document.getElementById('clarityVal').textContent='3';
+  selectedTags=[];
+  document.querySelectorAll('.tag-chip').forEach(function(c){c.classList.remove('sel');});
+  selMood(document.querySelectorAll('.mood-btn')[5],'🌙');
+  renderDreams(); renderPatterns();
+  showToast('Dream logged');
+  if(ollamaConnected) autoInterpret(dream.id);
+}
+
+async function autoInterpret(id){
+  var dream=dreams.find(function(d){return d.id===id;});
+  if(!dream||dream.interpretation) return;
+  var prompt='You are a compassionate dream analyst with knowledge of Jungian psychology and cross-cultural dream symbolism. '+
+    'Analyse this dream and provide: 1) the 2-3 key symbols and what they may represent, 2) an overall emotional theme, 3) one gentle personal insight. '+
+    'Keep it warm, thoughtful, and non-prescriptive. Dream:\n\n'+dream.text;
+  try{
+    var result=await callOllama(prompt);
+    dream.interpretation=result.trim();
+    localStorage.setItem('dl_dreams',JSON.stringify(dreams));
+    renderDreams();
+  }catch(e){}
+}
+
+async function interpretDream(id){
+  if(!ollamaConnected){showToast('Connect to Ollama first');return;}
+  var dream=dreams.find(function(d){return d.id===id;});
+  if(!dream) return;
+  var card=document.getElementById('interp-'+id);
+  if(card) card.innerHTML='<div class="interp-label">&#129504; Interpreting...</div>';
+  var prompt='You are a compassionate dream analyst. Analyse this dream and provide: 1) the 2-3 key symbols and what they may represent, 2) an overall emotional theme, 3) one gentle personal insight. Dream:\n\n'+dream.text;
+  try{
+    var result=await callOllama(prompt);
+    dream.interpretation=result.trim();
+    localStorage.setItem('dl_dreams',JSON.stringify(dreams));
+    renderDreams();
+  }catch(e){if(card) card.innerHTML='<div class="interp-label">Error: '+esc(e.message)+'</div>';}
+}
+
+function deleteDream(id){
+  dreams=dreams.filter(function(d){return d.id!==id;});
+  localStorage.setItem('dl_dreams',JSON.stringify(dreams));
+  renderDreams(); renderPatterns(); showToast('Deleted');
+}
+
+function renderDreams(){
+  var el=document.getElementById('dreamsList');
+  if(!dreams.length){el.innerHTML='<div class="empty-state"><div class="big">&#127769;</div>No dreams logged yet.<br>Tap Log to record your first dream.</div>';return;}
+  el.innerHTML=dreams.map(function(d){
+    var date=new Date(d.date);
+    var ds=date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    var excerpt=d.text.substring(0,100)+(d.text.length>100?'…':'');
+    var stars='★'.repeat(d.clarity)+'☆'.repeat(5-d.clarity);
+    var tags=d.tags.map(function(t){return '<span class="dtag">'+esc(t)+'</span>';}).join('');
+    var interpHtml=d.interpretation?
+      '<div class="interp-section" id="interp-'+d.id+'">'+
+        '<div class="interp-label">&#129504; Dream Analysis</div>'+
+        '<div class="interp-text">'+esc(d.interpretation)+'</div>'+
+      '</div>':
+      '<div class="interp-section" id="interp-'+d.id+'">'+
+        '<button class="interp-btn" onclick="interpretDream(\''+d.id+'\')">&#129504; Interpret this dream</button>'+
+      '</div>';
+    return '<div class="dream-card">'+
+      '<div class="dream-card-header">'+
+        '<div><div class="dream-date">'+ds+'</div><div class="clarity-badge">'+stars+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:8px;"><span class="dream-mood">'+d.mood+'</span>'+
+        '<button class="del-btn" onclick="deleteDream(\''+d.id+'\')">&#10005;</button></div>'+
+      '</div>'+
+      '<div class="dream-excerpt">'+esc(excerpt)+'</div>'+
+      (tags?'<div class="dream-tags">'+tags+'</div>':'')+
+      interpHtml+
+    '</div>';
+  }).join('');
+}
+
+async function generatePatternReport(){
+  if(!ollamaConnected){showToast('Connect to Ollama first');return;}
+  if(dreams.length<3){showToast('Log at least 3 dreams first');return;}
+  var box=document.getElementById('patternBox');
+  box.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:14px;">Analysing dream patterns...</div>';
+  var recent=dreams.slice(0,10).map(function(d,i){
+    return 'Dream '+(i+1)+' ('+d.mood+', clarity '+d.clarity+'/5, tags: '+d.tags.join(',')||'none'+'): '+d.text.substring(0,150);
+  }).join('\n\n');
+  var prompt='You are a dream pattern analyst. Analyse these recent dreams and identify: '+
+    '1) the most recurring symbol or theme across entries, '+
+    '2) what emotional state seems to dominate this person\'s dream life, '+
+    '3) any notable evolution or shift in themes over time, '+
+    '4) one integrative insight about what these patterns might reflect. '+
+    'Be thoughtful, warm, and non-prescriptive.\n\nDreams:\n\n'+recent;
+  try{
+    var result=await callOllama(prompt);
+    box.innerHTML='<div class="pattern-box">'+esc(result)+'</div>';
+  }catch(e){box.innerHTML='<div style="color:var(--red);font-size:12px;padding:12px;">Error: '+esc(e.message)+'</div>';}
+}
+
+function renderPatterns(){
+  var el=document.getElementById('patternsArea');
+  if(dreams.length<3){el.innerHTML='<div class="empty-state"><div class="big">&#10024;</div>Log at least 3 dreams<br>to see pattern analysis.</div>';return;}
+
+  // mood counts
+  var moodCounts={};
+  dreams.forEach(function(d){moodCounts[d.mood]=(moodCounts[d.mood]||0)+1;});
+  var maxMood=Math.max.apply(null,Object.values(moodCounts));
+
+  // tag frequency
+  var tagCounts={};
+  dreams.forEach(function(d){d.tags.forEach(function(t){tagCounts[t]=(tagCounts[t]||0)+1;});});
+  var sortedTags=Object.keys(tagCounts).sort(function(a,b){return tagCounts[b]-tagCounts[a];});
+  var maxTag=sortedTags.length?tagCounts[sortedTags[0]]:1;
+
+  var avgClarity=dreams.reduce(function(s,d){return s+d.clarity;},0)/dreams.length;
+  var interpreted=dreams.filter(function(d){return d.interpretation;}).length;
+
+  el.innerHTML=
+    '<div class="pattern-stat-row">'+
+      '<div class="pstat"><div class="pstat-num">'+dreams.length+'</div><div class="pstat-lbl">Dreams</div></div>'+
+      '<div class="pstat"><div class="pstat-num">'+avgClarity.toFixed(1)+'</div><div class="pstat-lbl">Avg Clarity</div></div>'+
+      '<div class="pstat"><div class="pstat-num">'+interpreted+'</div><div class="pstat-lbl">Interpreted</div></div>'+
+    '</div>'+
+
+    '<div class="section-hd">Mood Distribution</div>'+
+    Object.keys(moodCounts).map(function(m){
+      var pct=Math.round((moodCounts[m]/maxMood)*100);
+      return '<div class="mood-bar-row"><span class="mood-bar-lbl">'+m+'</span>'+
+        '<div class="mood-bar-bg"><div class="mood-bar-fill" style="width:'+pct+'%"></div></div>'+
+        '<span class="mood-bar-count">'+moodCounts[m]+'</span></div>';
+    }).join('')+
+
+    (sortedTags.length?'<div class="section-hd">Theme Cloud</div>'+
+    '<div class="symbol-cloud">'+sortedTags.map(function(t){
+      var ratio=tagCounts[t]/maxTag;
+      var cls=ratio>0.7?'lg':ratio>0.3?'':' sm';
+      return '<span class="symbol-tag'+cls+'">'+esc(t)+' ×'+tagCounts[t]+'</span>';
+    }).join('')+'</div>':'')+
+
+    '<button class="pattern-report-btn" onclick="generatePatternReport()">&#10024; Generate AI Pattern Report</button>'+
+    '<div id="patternBox"></div>';
+}
+
+function switchTab(n){
+  var ns=['log','dreams','patterns'];
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',ns[i]===n);});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById('view-'+n).classList.add('active');
+  if(n==='patterns') renderPatterns();
+  if(n==='dreams') renderDreams();
+}
+
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2300);}
+</script>
+</body>
+</html>
